@@ -10,6 +10,7 @@ export default function ControlHoras() {
   const [busqueda, setBusqueda] = useState('');
   const [loading, setLoading] = useState(true);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [guardando, setGuardando] = useState(false);
   const [formData, setFormData] = useState({
     empleado_id: '',
     fecha: '',
@@ -18,61 +19,63 @@ export default function ControlHoras() {
     motivo: '',
   });
 
-  async function fetchEmpleados() {
-    const { data, error } = await supabase
-      .from('personal')
-      .select('id, nombre, apellido')
-      .order('apellido');
+  const inputClass = "w-full border border-gray-400 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black";
 
-    if (error) {
+  async function fetchEmpleados() {
+    try {
+      const { data, error } = await supabase
+        .from('personal')
+        .select('id, nombre, apellido')
+        .order('apellido');
+      if (error) throw error;
+      setEmpleados(data);
+    } catch (error) {
       alert('Error cargando empleados: ' + error.message);
-      return;
     }
-    setEmpleados(data);
   }
 
   async function fetchHorasUsadas() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1;
+    try {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1;
 
-    const startDate = `${year}-${month.toString().padStart(2, '0')}-01`;
-    const nextMonth = month === 12 ? 1 : month + 1;
-    const nextYear = month === 12 ? year + 1 : year;
-    const endDate = `${nextYear}-${nextMonth.toString().padStart(2, '0')}-01`;
+      const startDate = `${year}-${month.toString().padStart(2, '0')}-01`;
+      const nextMonth = month === 12 ? 1 : month + 1;
+      const nextYear = month === 12 ? year + 1 : year;
+      const endDate = `${nextYear}-${nextMonth.toString().padStart(2, '0')}-01`;
 
-    const { data, error } = await supabase
-      .from('salidas_autorizadas')
-      .select('empleado_id, horas')
-      .gte('fecha', startDate)
-      .lt('fecha', endDate);
+      const { data, error } = await supabase
+        .from('salidas_autorizadas')
+        .select('empleado_id, horas')
+        .gte('fecha', startDate)
+        .lt('fecha', endDate);
 
-    if (error) {
+      if (error) throw error;
+
+      const sumHoras = {};
+      data.forEach(({ empleado_id, horas }) => {
+        if (!sumHoras[empleado_id]) sumHoras[empleado_id] = 0;
+        sumHoras[empleado_id] += horas;
+      });
+
+      setHorasUsadas(sumHoras);
+    } catch (error) {
       alert('Error cargando horas usadas: ' + error.message);
-      return;
     }
-
-    const sumHoras = {};
-    data.forEach(({ empleado_id, horas }) => {
-      if (!sumHoras[empleado_id]) sumHoras[empleado_id] = 0;
-      sumHoras[empleado_id] += horas;
-    });
-
-    setHorasUsadas(sumHoras);
   }
 
   async function fetchSalidas() {
-    const { data, error } = await supabase
-      .from('salidas_autorizadas')
-      .select('id, fecha, motivo, hora_salida, hora_regreso, empleado_id, personal:empleado_id(nombre, apellido)')
-      .order('fecha', { ascending: false });
-
-    if (error) {
+    try {
+      const { data, error } = await supabase
+        .from('salidas_autorizadas')
+        .select('id, fecha, motivo, hora_salida, hora_regreso, empleado_id, personal:empleado_id(nombre, apellido)')
+        .order('fecha', { ascending: false });
+      if (error) throw error;
+      setSalidas(data);
+    } catch (error) {
       alert('Error cargando salidas: ' + error.message);
-      return;
     }
-
-    setSalidas(data);
   }
 
   async function cargarDatos() {
@@ -94,15 +97,21 @@ export default function ControlHoras() {
 
   async function guardarSalidaAutorizada(e) {
     e.preventDefault();
+
     const { empleado_id, fecha, hora_salida, hora_regreso, motivo } = formData;
 
-    const { error } = await supabase
-      .from('salidas_autorizadas')
-      .insert([{ empleado_id, fecha, hora_salida, hora_regreso, motivo }]);
+    if (!empleado_id || !fecha || !hora_salida || !hora_regreso || !motivo.trim()) {
+      alert('Por favor, completá todos los campos.');
+      return;
+    }
 
-    if (error) {
-      alert('Error al guardar salida: ' + error.message);
-    } else {
+    setGuardando(true);
+    try {
+      const { error } = await supabase
+        .from('salidas_autorizadas')
+        .insert([{ empleado_id, fecha, hora_salida, hora_regreso, motivo }]);
+      if (error) throw error;
+
       alert('Salida registrada correctamente');
       setMostrarFormulario(false);
       setFormData({
@@ -113,33 +122,43 @@ export default function ControlHoras() {
         motivo: '',
       });
       cargarDatos();
+    } catch (error) {
+      alert('Error al guardar salida: ' + error.message);
+    } finally {
+      setGuardando(false);
     }
   }
 
-  return (
-    <div className="max-w-5xl mx-auto p-6 bg-white text-gray-900 rounded shadow-md">
-      <h2 className="text-2xl font-bold mb-6 text-center">Control de Horas Justificadas</h2>
+  if (loading) {
+    return <p className="mt-10 text-center text-gray-700">Cargando datos...</p>;
+  }
 
-      <div className="mb-4 flex flex-col sm:flex-row sm:justify-between gap-4">
+  return (
+    <div className="max-w-5xl p-6 mx-auto text-gray-900 bg-white rounded shadow-md">
+      <h2 className="mb-6 text-2xl font-bold text-center">Control de Horas Justificadas</h2>
+
+      <div className="flex flex-col gap-4 mb-4 sm:flex-row sm:justify-between">
         <input
           type="text"
           placeholder="Buscar por nombre o apellido..."
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
-          className="w-full sm:w-1/2 px-4 py-2 border border-gray-400 rounded focus:outline-none focus:ring-2 focus:ring-black"
+          className="w-full px-4 py-2 border border-gray-400 rounded sm:w-1/2 focus:outline-none focus:ring-2 focus:ring-black"
+          aria-label="Buscar empleado por nombre o apellido"
         />
 
         <button
-          className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800"
+          className="px-4 py-2 text-white bg-black rounded hover:bg-gray-800"
           onClick={() => setMostrarFormulario(true)}
+          type="button"
         >
           + Registrar Salida Autorizada
         </button>
       </div>
 
       {/* Tabla horas restantes */}
-      <table className="min-w-full border border-gray-700 rounded mb-10">
-        <thead className="bg-black text-white">
+      <table className="min-w-full mb-10 border border-gray-700 rounded">
+        <thead className="text-white bg-black">
           <tr>
             <th className="p-3 text-left border-r border-gray-700">Nombre</th>
             <th className="p-3 text-left border-r border-gray-700">Apellido</th>
@@ -152,10 +171,10 @@ export default function ControlHoras() {
             const restantes = Math.max(0, HORAS_MENSUALES - usadas);
 
             return (
-              <tr key={emp.id} className="border-t border-gray-700 hover:bg-gray-100 transition">
+              <tr key={emp.id} className="transition border-t border-gray-700 hover:bg-gray-100">
                 <td className="p-3 border-r border-gray-700">{emp.nombre}</td>
                 <td className="p-3 border-r border-gray-700">{emp.apellido}</td>
-                <td className="p-3 text-center font-semibold">{restantes.toFixed(2)}</td>
+                <td className="p-3 font-semibold text-center">{restantes.toFixed(2)}</td>
               </tr>
             );
           })}
@@ -163,9 +182,9 @@ export default function ControlHoras() {
       </table>
 
       {/* Tabla salidas registradas */}
-      <h3 className="text-xl font-bold mb-2">Salidas Registradas</h3>
-      <table className="min-w-full border border-gray-400 rounded mb-6 text-sm">
-        <thead className="bg-gray-800 text-white">
+      <h3 className="mb-2 text-xl font-bold">Salidas Registradas</h3>
+      <table className="min-w-full mb-6 text-sm border border-gray-400 rounded">
+        <thead className="text-white bg-gray-800">
           <tr>
             <th className="p-2">Fecha</th>
             <th className="p-2">Empleado</th>
@@ -189,15 +208,23 @@ export default function ControlHoras() {
 
       {/* Formulario modal */}
       {mostrarFormulario && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded shadow-md w-full max-w-md">
-            <h3 className="text-lg font-bold mb-4">Registrar Salida Autorizada</h3>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-title"
+        >
+          <div className="w-full max-w-md p-6 bg-white rounded shadow-md">
+            <h3 id="modal-title" className="mb-4 text-lg font-bold">
+              Registrar Salida Autorizada
+            </h3>
             <form onSubmit={guardarSalidaAutorizada} className="space-y-3">
               <select
                 required
                 value={formData.empleado_id}
                 onChange={(e) => setFormData({ ...formData, empleado_id: e.target.value })}
-                className="w-full border px-3 py-2 rounded"
+                className={inputClass}
+                aria-label="Seleccionar empleado"
               >
                 <option value="">Seleccionar empleado</option>
                 {empleados.map((emp) => (
@@ -212,7 +239,8 @@ export default function ControlHoras() {
                 required
                 value={formData.fecha}
                 onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
-                className="w-full border px-3 py-2 rounded"
+                className={inputClass}
+                aria-label="Fecha de salida"
               />
 
               <input
@@ -221,7 +249,8 @@ export default function ControlHoras() {
                 placeholder="Hora de salida"
                 value={formData.hora_salida}
                 onChange={(e) => setFormData({ ...formData, hora_salida: e.target.value })}
-                className="w-full border px-3 py-2 rounded"
+                className={inputClass}
+                aria-label="Hora de salida"
               />
 
               <input
@@ -230,7 +259,8 @@ export default function ControlHoras() {
                 placeholder="Hora de regreso"
                 value={formData.hora_regreso}
                 onChange={(e) => setFormData({ ...formData, hora_regreso: e.target.value })}
-                className="w-full border px-3 py-2 rounded"
+                className={inputClass}
+                aria-label="Hora de regreso"
               />
 
               <input
@@ -239,22 +269,25 @@ export default function ControlHoras() {
                 placeholder="Motivo"
                 value={formData.motivo}
                 onChange={(e) => setFormData({ ...formData, motivo: e.target.value })}
-                className="w-full border px-3 py-2 rounded"
+                className={inputClass}
+                aria-label="Motivo de la salida"
               />
 
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setMostrarFormulario(false)}
-                  className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
+                  className="px-4 py-2 text-white bg-gray-400 rounded hover:bg-gray-500"
+                  disabled={guardando}
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800"
+                  className="px-4 py-2 text-white bg-black rounded hover:bg-gray-800 disabled:opacity-50"
+                  disabled={guardando}
                 >
-                  Guardar
+                  {guardando ? 'Guardando...' : 'Guardar'}
                 </button>
               </div>
             </form>
