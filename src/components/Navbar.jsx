@@ -13,10 +13,10 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="bg-black text-white shadow-md">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-14 items-center">
-          <div className="flex-shrink-0 font-bold text-lg select-none">
+    <nav className="text-white bg-black shadow-md">
+      <div className="max-w-5xl px-4 mx-auto sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-14">
+          <div className="flex-shrink-0 text-lg font-bold select-none">
             Sistema Control
           </div>
 
@@ -45,7 +45,7 @@ export default function Navbar() {
           </div>
 
           {/* Menú desktop */}
-          <div className="hidden sm:flex space-x-6 items-center">
+          <div className="items-center hidden space-x-6 sm:flex">
             <NavLink
               to="/"
               className={({ isActive }) =>
@@ -78,7 +78,7 @@ export default function Navbar() {
 
             <button
               onClick={handleLogout}
-              className="ml-6 bg-red-600 hover:bg-red-700 text-white py-1 px-3 rounded transition"
+              className="px-3 py-1 ml-6 text-white transition bg-red-600 rounded hover:bg-red-700"
             >
               Cerrar sesión
             </button>
@@ -87,7 +87,7 @@ export default function Navbar() {
 
         {/* Menú móvil */}
         {menuOpen && (
-          <div className="sm:hidden mt-2 space-y-2 px-2 pb-3 border-t border-gray-700">
+          <div className="px-2 pb-3 mt-2 space-y-2 border-t border-gray-700 sm:hidden">
             <NavLink
               to="/"
               className={({ isActive }) =>
@@ -99,7 +99,7 @@ export default function Navbar() {
             </NavLink>
 
             <NavLink
-              to="/controlpersonal"
+              to="/control"
               className={({ isActive }) =>
                 isActive ? 'block border-b-2 border-white pb-1 font-semibold' : 'block hover:border-b-2 hover:border-white pb-1 transition'
               }
@@ -123,7 +123,7 @@ export default function Navbar() {
                 handleLogout();
                 setMenuOpen(false);
               }}
-              className="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-3 rounded transition"
+              className="w-full px-3 py-2 text-white transition bg-red-600 rounded hover:bg-red-700"
             >
               Cerrar sesión
             </button>
