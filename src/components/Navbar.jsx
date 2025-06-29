@@ -14,9 +14,9 @@ export default function Navbar() {
 
   return (
     <nav className="text-white bg-black shadow-md">
-      <div className="max-w-5xl px-4 mx-auto sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-14">
-          <div className="flex-shrink-0 text-lg font-bold select-none">
+      <div className="max-w-5xl px-3 mx-auto sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-12 sm:h-14">
+          <div className="flex-shrink-0 text-base font-bold select-none sm:text-lg">
             Sistema Control
           </div>
 
@@ -26,10 +26,10 @@ export default function Navbar() {
               onClick={() => setMenuOpen(!menuOpen)}
               aria-label="Toggle menu"
               aria-expanded={menuOpen}
-              className="focus:outline-none focus:ring-2 focus:ring-white"
+              className="p-1 focus:outline-none focus:ring-2 focus:ring-white"
             >
               <svg
-                className="w-6 h-6"
+                className="w-5 h-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -45,11 +45,13 @@ export default function Navbar() {
           </div>
 
           {/* Menú desktop */}
-          <div className="items-center hidden space-x-6 sm:flex">
+          <div className="items-center hidden space-x-5 text-sm sm:flex sm:text-base">
             <NavLink
               to="/"
               className={({ isActive }) =>
-                isActive ? 'border-b-2 border-white pb-1 font-semibold' : 'hover:border-b-2 hover:border-white pb-1 transition'
+                isActive
+                  ? 'border-b-2 border-white pb-0.5 font-semibold'
+                  : 'hover:border-b-2 hover:border-white pb-0.5 transition'
               }
               onClick={() => setMenuOpen(false)}
             >
@@ -59,7 +61,9 @@ export default function Navbar() {
             <NavLink
               to="/control"
               className={({ isActive }) =>
-                isActive ? 'border-b-2 border-white pb-1 font-semibold' : 'hover:border-b-2 hover:border-white pb-1 transition'
+                isActive
+                  ? 'border-b-2 border-white pb-0.5 font-semibold'
+                  : 'hover:border-b-2 hover:border-white pb-0.5 transition'
               }
               onClick={() => setMenuOpen(false)}
             >
@@ -69,7 +73,9 @@ export default function Navbar() {
             <NavLink
               to="/control-horas"
               className={({ isActive }) =>
-                isActive ? 'border-b-2 border-white pb-1 font-semibold' : 'hover:border-b-2 hover:border-white pb-1 transition'
+                isActive
+                  ? 'border-b-2 border-white pb-0.5 font-semibold'
+                  : 'hover:border-b-2 hover:border-white pb-0.5 transition'
               }
               onClick={() => setMenuOpen(false)}
             >
@@ -78,7 +84,7 @@ export default function Navbar() {
 
             <button
               onClick={handleLogout}
-              className="px-3 py-1 ml-6 text-white transition bg-red-600 rounded hover:bg-red-700"
+              className="px-3 py-1 ml-6 text-sm transition bg-red-600 rounded hover:bg-red-700"
             >
               Cerrar sesión
             </button>
@@ -87,11 +93,13 @@ export default function Navbar() {
 
         {/* Menú móvil */}
         {menuOpen && (
-          <div className="px-2 pb-3 mt-2 space-y-2 border-t border-gray-700 sm:hidden">
+          <div className="px-2 pb-3 mt-2 space-y-1 text-sm border-t border-gray-700 sm:hidden">
             <NavLink
               to="/"
               className={({ isActive }) =>
-                isActive ? 'block border-b-2 border-white pb-1 font-semibold' : 'block hover:border-b-2 hover:border-white pb-1 transition'
+                isActive
+                  ? 'block border-b-2 border-white pb-1 font-semibold'
+                  : 'block hover:border-b-2 hover:border-white pb-1 transition'
               }
               onClick={() => setMenuOpen(false)}
             >
@@ -101,7 +109,9 @@ export default function Navbar() {
             <NavLink
               to="/control"
               className={({ isActive }) =>
-                isActive ? 'block border-b-2 border-white pb-1 font-semibold' : 'block hover:border-b-2 hover:border-white pb-1 transition'
+                isActive
+                  ? 'block border-b-2 border-white pb-1 font-semibold'
+                  : 'block hover:border-b-2 hover:border-white pb-1 transition'
               }
               onClick={() => setMenuOpen(false)}
             >
@@ -111,7 +121,9 @@ export default function Navbar() {
             <NavLink
               to="/control-horas"
               className={({ isActive }) =>
-                isActive ? 'block border-b-2 border-white pb-1 font-semibold' : 'block hover:border-b-2 hover:border-white pb-1 transition'
+                isActive
+                  ? 'block border-b-2 border-white pb-1 font-semibold'
+                  : 'block hover:border-b-2 hover:border-white pb-1 transition'
               }
               onClick={() => setMenuOpen(false)}
             >
@@ -123,7 +135,7 @@ export default function Navbar() {
                 handleLogout();
                 setMenuOpen(false);
               }}
-              className="w-full px-3 py-2 text-white transition bg-red-600 rounded hover:bg-red-700"
+              className="w-full px-3 py-2 text-sm transition bg-red-600 rounded hover:bg-red-700"
             >
               Cerrar sesión
             </button>

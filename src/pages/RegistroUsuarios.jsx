@@ -127,7 +127,6 @@ export default function RegistroUsuarios() {
     setUpdatingId(null);
   }
 
-  // Funciones para edición manual
   function iniciarEdicion(emp) {
     setEditandoId(emp.id);
     setEdicionHoras({
@@ -181,8 +180,8 @@ export default function RegistroUsuarios() {
   function generarPDF() {
     const doc = new jsPDF();
 
-    doc.setFontSize(18);
-    doc.text('Planilla de Usuarios y Horarios', 14, 22);
+    doc.setFontSize(16);
+    doc.text('Planilla de Usuarios y Horarios', 14, 20);
 
     const columns = [
       { header: 'Apellido y Nombre', dataKey: 'nombre_completo' },
@@ -199,33 +198,33 @@ export default function RegistroUsuarios() {
     doc.autoTable({
       head: [columns.map(c => c.header)],
       body: rows.map(r => columns.map(c => r[c.dataKey])),
-      startY: 30,
-      styles: { fontSize: 10 },
+      startY: 28,
+      styles: { fontSize: 8 },
       headStyles: { fillColor: [0, 0, 0], textColor: 255 },
     });
 
     doc.save('planilla_usuarios_horarios.pdf');
   }
 
-  if (loading) return <p className="text-center mt-10">Cargando empleados...</p>;
+  if (loading) return <p className="mt-10 text-sm text-center">Cargando empleados...</p>;
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <h2 className="text-xl font-bold mb-6 text-center">Registro de Horarios</h2>
+    <div className="max-w-4xl p-2 mx-auto sm:p-4">
+      <h2 className="mb-4 text-lg font-bold text-center sm:text-xl">Registro de Horarios</h2>
 
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-3">
+      <div className="flex flex-col gap-2 mb-3 sm:flex-row sm:justify-between sm:items-center">
         <input
           type="text"
           placeholder="Buscar por nombre o apellido..."
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
-          className="w-full sm:w-72 px-4 py-2 border border-gray-400 rounded focus:outline-none focus:ring-2 focus:ring-black"
+          className="w-full px-3 py-2 text-sm border border-gray-400 rounded sm:w-72 focus:outline-none focus:ring-2 focus:ring-black"
           aria-label="Buscar por nombre o apellido"
         />
 
         <button
           onClick={generarPDF}
-          className="w-full sm:w-auto bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition"
+          className="w-full px-4 py-2 text-sm text-white transition bg-black rounded sm:w-auto hover:bg-gray-800"
           type="button"
         >
           Imprimir Planilla PDF
@@ -233,10 +232,10 @@ export default function RegistroUsuarios() {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="min-w-full border border-gray-300 rounded shadow">
-          <thead className="bg-black text-white">
+        <table className="min-w-full text-sm border border-gray-300 rounded shadow sm:text-base">
+          <thead className="text-white bg-black">
             <tr>
-              <th className="p-2 text-left">Apellido y Nombre</th>
+              <th className="w-auto max-w-xs p-2 text-left">Apellido y Nombre</th>
               <th className="p-2 text-center">Acciones</th>
               <th className="p-2 text-left">Hora Entrada</th>
               <th className="p-2 text-left">Hora Salida</th>
@@ -246,7 +245,7 @@ export default function RegistroUsuarios() {
           <tbody>
             {empleadosFiltrados.length === 0 ? (
               <tr>
-                <td colSpan="5" className="text-center p-4 text-gray-600">
+                <td colSpan="5" className="p-4 text-sm text-center text-gray-600">
                   No se encontraron empleados con ese nombre o apellido.
                 </td>
               </tr>
@@ -254,23 +253,25 @@ export default function RegistroUsuarios() {
               empleadosFiltrados.map((emp) => (
                 <tr
                   key={emp.id}
-                  className="border-t border-gray-300 hover:bg-gray-100 transition"
+                  className="transition border-t border-gray-300 hover:bg-gray-100"
                 >
-                  <td className="p-2">{`${emp.apellido}, ${emp.nombre}`}</td>
-                  <td className="p-2 flex justify-center gap-2 flex-wrap">
+                  <td className="w-auto max-w-xs p-2 whitespace-nowrap">{`${emp.apellido}, ${emp.nombre}`}</td>
+                  <td className="flex justify-center gap-2 p-2">
                     <button
                       onClick={() => registrarHora(emp.id, 'entrada')}
                       disabled={updatingId === emp.id || editandoId === emp.id}
-                      className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 disabled:opacity-50"
+                      className="px-3 py-1 text-xs text-white bg-green-600 rounded hover:bg-green-700 disabled:opacity-50 sm:text-sm whitespace-nowrap"
                       type="button"
+                      style={{ minWidth: '110px' }}
                     >
                       Registrar Ingreso
                     </button>
                     <button
                       onClick={() => registrarHora(emp.id, 'salida')}
                       disabled={updatingId === emp.id || editandoId === emp.id}
-                      className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 disabled:opacity-50"
+                      className="px-3 py-1 text-xs text-white bg-red-600 rounded hover:bg-red-700 disabled:opacity-50 sm:text-sm whitespace-nowrap"
                       type="button"
+                      style={{ minWidth: '110px' }}
                     >
                       Registrar Salida
                     </button>
@@ -284,7 +285,7 @@ export default function RegistroUsuarios() {
                         onChange={(e) =>
                           setEdicionHoras((prev) => ({ ...prev, hora_entrada: e.target.value }))
                         }
-                        className="border border-gray-400 rounded px-2 py-1 w-24"
+                        className="w-20 px-2 py-1 text-xs border border-gray-400 rounded sm:text-sm"
                       />
                     ) : (
                       emp.hora_entrada ?? '-'
@@ -298,7 +299,7 @@ export default function RegistroUsuarios() {
                         onChange={(e) =>
                           setEdicionHoras((prev) => ({ ...prev, hora_salida: e.target.value }))
                         }
-                        className="border border-gray-400 rounded px-2 py-1 w-24"
+                        className="w-20 px-2 py-1 text-xs border border-gray-400 rounded sm:text-sm"
                       />
                     ) : (
                       emp.hora_salida ?? '-'
@@ -311,14 +312,14 @@ export default function RegistroUsuarios() {
                         <button
                           onClick={() => guardarEdicion(emp)}
                           disabled={updatingId === emp.id}
-                          className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 disabled:opacity-50 mr-1"
+                          className="px-3 py-1 mr-1 text-xs text-white bg-blue-600 rounded hover:bg-blue-700 disabled:opacity-50 sm:text-sm"
                           type="button"
                         >
                           Guardar
                         </button>
                         <button
                           onClick={cancelarEdicion}
-                          className="bg-gray-400 text-white px-3 py-1 rounded hover:bg-gray-500"
+                          className="px-3 py-1 text-xs text-white bg-gray-400 rounded hover:bg-gray-500 sm:text-sm"
                           type="button"
                         >
                           Cancelar
@@ -328,7 +329,7 @@ export default function RegistroUsuarios() {
                       <button
                         onClick={() => iniciarEdicion(emp)}
                         disabled={updatingId === emp.id}
-                        className="bg-yellow-600 text-white px-3 py-1 rounded hover:bg-yellow-700 disabled:opacity-50"
+                        className="px-3 py-1 text-xs text-white bg-yellow-600 rounded hover:bg-yellow-700 disabled:opacity-50 sm:text-sm"
                         type="button"
                       >
                         Editar

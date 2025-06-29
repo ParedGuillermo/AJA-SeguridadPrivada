@@ -1,3 +1,15 @@
+/* tailwind.css o index.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html {
+    font-size: 14px; /* tamaño base en móvil */
+  }
+  @media (min-width: 640px) {
+    html {
+      font-size: 16px; /* tamaño base en desktop */
+    }
+  }
+}
