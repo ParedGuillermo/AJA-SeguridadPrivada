@@ -10,8 +10,14 @@ export default function RegistroUsuarios() {
   const [busqueda, setBusqueda] = useState('');
   const [editandoId, setEditandoId] = useState(null);
   const [edicionHoras, setEdicionHoras] = useState({ hora_entrada: '', hora_salida: '' });
+  const [mensaje, setMensaje] = useState('');
 
   const bucketName = 'fotos-personal';
+
+  function mostrarMensaje(txt) {
+    setMensaje(txt);
+    setTimeout(() => setMensaje(''), 2000);
+  }
 
   async function fetchEmpleadosConHorarios() {
     setLoading(true);
@@ -24,7 +30,7 @@ export default function RegistroUsuarios() {
       .order('nombre', { ascending: true });
 
     if (errorEmpleados) {
-      alert('Error cargando empleados: ' + errorEmpleados.message);
+      console.error('Error cargando empleados:', errorEmpleados.message);
       setLoading(false);
       return;
     }
@@ -35,7 +41,7 @@ export default function RegistroUsuarios() {
       .eq('fecha', fechaHoy);
 
     if (errorRegistros) {
-      alert('Error cargando registros de horarios: ' + errorRegistros.message);
+      console.error('Error cargando registros de horarios:', errorRegistros.message);
       setLoading(false);
       return;
     }
@@ -70,7 +76,6 @@ export default function RegistroUsuarios() {
 
   async function registrarHora(id, tipo) {
     setUpdatingId(id);
-
     const fechaHoy = new Date().toISOString().slice(0, 10);
     const ahora = new Date();
     const horaStr = ahora.toTimeString().slice(0, 5);
@@ -90,19 +95,22 @@ export default function RegistroUsuarios() {
     }
 
     if (registroExistente) {
-      const updateData = tipo === 'entrada'
-        ? { hora_entrada: horaStr }
-        : { hora_salida: horaStr };
+      const updateData = tipo === 'entrada' ? { hora_entrada: horaStr } : { hora_salida: horaStr };
 
       const { error: errorUpdate } = await supabase
         .from('registro_horarios')
         .update(updateData)
         .eq('id', registroExistente.id);
 
-      if (errorUpdate) {
-        console.error('Error al actualizar hora:', errorUpdate.message);
-      } else {
-        fetchEmpleadosConHorarios();
+      if (!errorUpdate) {
+        setEmpleados((prev) =>
+          prev.map((emp) =>
+            emp.id === id
+              ? { ...emp, ...updateData, registroId: registroExistente.id }
+              : emp
+          )
+        );
+        mostrarMensaje(`Hora de ${tipo} actualizada: ${horaStr}`);
       }
     } else {
       const insertData = {
@@ -112,15 +120,57 @@ export default function RegistroUsuarios() {
         hora_salida: tipo === 'salida' ? horaStr : null,
       };
 
-      const { error: errorInsert } = await supabase
+      const { data, error: errorInsert } = await supabase
         .from('registro_horarios')
-        .insert([insertData]);
+        .insert([insertData])
+        .select()
+        .single();
 
-      if (errorInsert) {
-        console.error('Error al insertar hora:', errorInsert.message);
-      } else {
-        fetchEmpleadosConHorarios();
+      if (!errorInsert) {
+        setEmpleados((prev) =>
+          prev.map((emp) =>
+            emp.id === id
+              ? { ...emp, ...insertData, registroId: data.id }
+              : emp
+          )
+        );
+        mostrarMensaje(`Hora de ${tipo} registrada: ${horaStr}`);
       }
+    }
+
+    setUpdatingId(null);
+  }
+
+  async function guardarEdicion(emp) {
+    if (!emp.registroId) {
+      mostrarMensaje('No existe registro para editar.');
+      return;
+    }
+
+    setUpdatingId(emp.id);
+
+    const { error } = await supabase
+      .from('registro_horarios')
+      .update({
+        hora_entrada: edicionHoras.hora_entrada || null,
+        hora_salida: edicionHoras.hora_salida || null,
+      })
+      .eq('id', emp.registroId);
+
+    if (!error) {
+      setEmpleados((prev) =>
+        prev.map((e) =>
+          e.id === emp.id
+            ? {
+                ...e,
+                hora_entrada: edicionHoras.hora_entrada || null,
+                hora_salida: edicionHoras.hora_salida || null,
+              }
+            : e
+        )
+      );
+      cancelarEdicion();
+      mostrarMensaje('Horas actualizadas');
     }
 
     setUpdatingId(null);
@@ -137,39 +187,6 @@ export default function RegistroUsuarios() {
   function cancelarEdicion() {
     setEditandoId(null);
     setEdicionHoras({ hora_entrada: '', hora_salida: '' });
-  }
-
-  async function guardarEdicion(emp) {
-    if (!emp.registroId) {
-      alert('No existe registro para editar. Por favor registre ingreso o salida primero.');
-      return;
-    }
-
-    if (!edicionHoras.hora_entrada || !edicionHoras.hora_salida) {
-      if (!window.confirm('Alguna hora está vacía. ¿Querés continuar?')) {
-        return;
-      }
-    }
-
-    setUpdatingId(emp.id);
-
-    const { error } = await supabase
-      .from('registro_horarios')
-      .update({
-        hora_entrada: edicionHoras.hora_entrada || null,
-        hora_salida: edicionHoras.hora_salida || null,
-      })
-      .eq('id', emp.registroId);
-
-    if (error) {
-      alert('Error al guardar cambios: ' + error.message);
-    } else {
-      alert('Horas actualizadas correctamente');
-      fetchEmpleadosConHorarios();
-      cancelarEdicion();
-    }
-
-    setUpdatingId(null);
   }
 
   const empleadosFiltrados = empleados.filter((emp) =>
@@ -205,12 +222,11 @@ export default function RegistroUsuarios() {
     doc.save('planilla_usuarios_horarios.pdf');
   }
 
-  if (loading)
-    return <p className="mt-10 text-sm text-center">Cargando empleados...</p>;
-
   return (
     <div className="max-w-4xl p-2 mx-auto sm:p-4">
       <h2 className="mb-4 text-lg font-bold text-center sm:text-xl">Registro de Horarios</h2>
+
+      {mensaje && <div className="p-2 mb-3 text-sm text-center text-white bg-green-600 rounded">{mensaje}</div>}
 
       <div className="flex flex-col gap-2 mb-3 sm:flex-row sm:justify-between sm:items-center">
         <input
@@ -229,11 +245,13 @@ export default function RegistroUsuarios() {
         </button>
       </div>
 
+      <p className="mb-2 text-xs text-center text-gray-500">Haz clic en un botón para registrar la hora sin refrescar toda la tabla.</p>
+
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm border border-gray-300 rounded shadow sm:text-base">
           <thead className="text-white bg-black">
             <tr>
-              <th className="w-auto max-w-xs p-2 text-left">Apellido y Nombre</th>
+              <th className="p-2 text-left">Apellido y Nombre</th>
               <th className="p-2 text-center">Acciones</th>
               <th className="p-2 text-left">Hora Entrada</th>
               <th className="p-2 text-left">Hora Salida</th>
@@ -249,27 +267,22 @@ export default function RegistroUsuarios() {
               </tr>
             ) : (
               empleadosFiltrados.map((emp) => (
-                <tr
-                  key={emp.id}
-                  className="transition border-t border-gray-300 hover:bg-gray-100"
-                >
-                  <td className="w-auto max-w-xs p-2 whitespace-nowrap">{`${emp.apellido}, ${emp.nombre}`}</td>
+                <tr key={emp.id} className="transition border-t border-gray-300 hover:bg-gray-100">
+                  <td className="p-2 whitespace-nowrap">{`${emp.apellido}, ${emp.nombre}`}</td>
                   <td className="flex justify-center gap-2 p-2">
                     <button
                       onClick={() => registrarHora(emp.id, 'entrada')}
                       disabled={updatingId === emp.id || editandoId === emp.id}
                       className="px-3 py-1 text-xs text-white bg-green-600 rounded hover:bg-green-700 disabled:opacity-50 sm:text-sm"
-                      style={{ minWidth: '110px' }}
                     >
-                      Registrar Ingreso
+                      Ingreso
                     </button>
                     <button
                       onClick={() => registrarHora(emp.id, 'salida')}
                       disabled={updatingId === emp.id || editandoId === emp.id}
                       className="px-3 py-1 text-xs text-white bg-red-600 rounded hover:bg-red-700 disabled:opacity-50 sm:text-sm"
-                      style={{ minWidth: '110px' }}
                     >
-                      Registrar Salida
+                      Salida
                     </button>
                   </td>
                   <td className="p-2">
