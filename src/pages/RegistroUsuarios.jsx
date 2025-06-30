@@ -73,9 +73,8 @@ export default function RegistroUsuarios() {
 
     const fechaHoy = new Date().toISOString().slice(0, 10);
     const ahora = new Date();
-    const horaStr = ahora.toTimeString().slice(0, 5); // HH:mm
+    const horaStr = ahora.toTimeString().slice(0, 5);
 
-    // Buscar registro existente
     const { data: registroExistente, error: errorBuscar } = await supabase
       .from('registro_horarios')
       .select('*')
@@ -85,13 +84,15 @@ export default function RegistroUsuarios() {
       .single();
 
     if (errorBuscar && errorBuscar.code !== 'PGRST116') {
-      alert('Error buscando registro: ' + errorBuscar.message);
+      console.error('Error buscando registro:', errorBuscar.message);
       setUpdatingId(null);
       return;
     }
 
     if (registroExistente) {
-      const updateData = tipo === 'entrada' ? { hora_entrada: horaStr } : { hora_salida: horaStr };
+      const updateData = tipo === 'entrada'
+        ? { hora_entrada: horaStr }
+        : { hora_salida: horaStr };
 
       const { error: errorUpdate } = await supabase
         .from('registro_horarios')
@@ -99,9 +100,8 @@ export default function RegistroUsuarios() {
         .eq('id', registroExistente.id);
 
       if (errorUpdate) {
-        alert('Error al actualizar hora: ' + errorUpdate.message);
+        console.error('Error al actualizar hora:', errorUpdate.message);
       } else {
-        alert(`Hora de ${tipo} actualizada: ${horaStr}`);
         fetchEmpleadosConHorarios();
       }
     } else {
@@ -117,9 +117,8 @@ export default function RegistroUsuarios() {
         .insert([insertData]);
 
       if (errorInsert) {
-        alert('Error al insertar hora: ' + errorInsert.message);
+        console.error('Error al insertar hora:', errorInsert.message);
       } else {
-        alert(`Hora de ${tipo} registrada: ${horaStr}`);
         fetchEmpleadosConHorarios();
       }
     }
@@ -169,6 +168,7 @@ export default function RegistroUsuarios() {
       fetchEmpleadosConHorarios();
       cancelarEdicion();
     }
+
     setUpdatingId(null);
   }
 
@@ -179,7 +179,6 @@ export default function RegistroUsuarios() {
 
   function generarPDF() {
     const doc = new jsPDF();
-
     doc.setFontSize(16);
     doc.text('Planilla de Usuarios y Horarios', 14, 20);
 
@@ -206,7 +205,8 @@ export default function RegistroUsuarios() {
     doc.save('planilla_usuarios_horarios.pdf');
   }
 
-  if (loading) return <p className="mt-10 text-sm text-center">Cargando empleados...</p>;
+  if (loading)
+    return <p className="mt-10 text-sm text-center">Cargando empleados...</p>;
 
   return (
     <div className="max-w-4xl p-2 mx-auto sm:p-4">
@@ -219,13 +219,11 @@ export default function RegistroUsuarios() {
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
           className="w-full px-3 py-2 text-sm border border-gray-400 rounded sm:w-72 focus:outline-none focus:ring-2 focus:ring-black"
-          aria-label="Buscar por nombre o apellido"
         />
 
         <button
           onClick={generarPDF}
           className="w-full px-4 py-2 text-sm text-white transition bg-black rounded sm:w-auto hover:bg-gray-800"
-          type="button"
         >
           Imprimir Planilla PDF
         </button>
@@ -260,8 +258,7 @@ export default function RegistroUsuarios() {
                     <button
                       onClick={() => registrarHora(emp.id, 'entrada')}
                       disabled={updatingId === emp.id || editandoId === emp.id}
-                      className="px-3 py-1 text-xs text-white bg-green-600 rounded hover:bg-green-700 disabled:opacity-50 sm:text-sm whitespace-nowrap"
-                      type="button"
+                      className="px-3 py-1 text-xs text-white bg-green-600 rounded hover:bg-green-700 disabled:opacity-50 sm:text-sm"
                       style={{ minWidth: '110px' }}
                     >
                       Registrar Ingreso
@@ -269,14 +266,12 @@ export default function RegistroUsuarios() {
                     <button
                       onClick={() => registrarHora(emp.id, 'salida')}
                       disabled={updatingId === emp.id || editandoId === emp.id}
-                      className="px-3 py-1 text-xs text-white bg-red-600 rounded hover:bg-red-700 disabled:opacity-50 sm:text-sm whitespace-nowrap"
-                      type="button"
+                      className="px-3 py-1 text-xs text-white bg-red-600 rounded hover:bg-red-700 disabled:opacity-50 sm:text-sm"
                       style={{ minWidth: '110px' }}
                     >
                       Registrar Salida
                     </button>
                   </td>
-
                   <td className="p-2">
                     {editandoId === emp.id ? (
                       <input
@@ -305,7 +300,6 @@ export default function RegistroUsuarios() {
                       emp.hora_salida ?? '-'
                     )}
                   </td>
-
                   <td className="p-2 text-center">
                     {editandoId === emp.id ? (
                       <>
@@ -313,14 +307,12 @@ export default function RegistroUsuarios() {
                           onClick={() => guardarEdicion(emp)}
                           disabled={updatingId === emp.id}
                           className="px-3 py-1 mr-1 text-xs text-white bg-blue-600 rounded hover:bg-blue-700 disabled:opacity-50 sm:text-sm"
-                          type="button"
                         >
                           Guardar
                         </button>
                         <button
                           onClick={cancelarEdicion}
                           className="px-3 py-1 text-xs text-white bg-gray-400 rounded hover:bg-gray-500 sm:text-sm"
-                          type="button"
                         >
                           Cancelar
                         </button>
@@ -330,7 +322,6 @@ export default function RegistroUsuarios() {
                         onClick={() => iniciarEdicion(emp)}
                         disabled={updatingId === emp.id}
                         className="px-3 py-1 text-xs text-white bg-yellow-600 rounded hover:bg-yellow-700 disabled:opacity-50 sm:text-sm"
-                        type="button"
                       >
                         Editar
                       </button>
